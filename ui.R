@@ -22,15 +22,22 @@ ui <- dashboardPage(skin = "purple",
                     dashboardSidebar(disable=TRUE),
                     dashboardBody(
                       htmlOutput("header"),
-                      fluidRow(tabItem(tabName = "Election Plots",box(
+                      fluidRow(tabItem(tabName = "Election Plots",
+                                       box(htmlOutput("description"),width=12),
+                                       box(
                         title = p(strong(paste("Harris wins",sprintf("%.1f%%",sum(latestSimData$ElectoralVotes>=270)/40),"of simulations"))),
                                                                       plotOutput("ECHist",height = "400px"),
                                                              plotOutput("forestPlot",height="800px")),
                               box(selectInput("statePick", "State/district level statistics:", 
                                               choices = stateOptions,selected="Pennsylvania"),
                                   plotOutput("stateForest",height="200px"),
-                                  htmlOutput("summary")),
+                                  htmlOutput("summary"),
+                                  selectInput("stateComparePick",HTML("<br>Compare to:"),
+                                              choices = stateOptions,selected="Michigan"),
+                                  plotOutput("comparisonPlot",height="400px",width="100%"),
+                                  htmlOutput("compare")),
                               box(plotOutput("PopVsEC"),width=12,
-                                  title = p(strong("Popular vote margin vs. Electoral College margin"))))),
+                                  title = p(strong("Popular vote margin vs. Electoral College margin")),
+                                  htmlOutput("dotPlotDescription")))),
                       htmlOutput("footer")
                     ))
