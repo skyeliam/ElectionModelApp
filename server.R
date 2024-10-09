@@ -225,4 +225,14 @@ server <- function(input, output, session) {
     }
     HTML(compareStr)
   })
+  
+  count <- reactiveValues(i = 0)
+  autoInvalidate <- reactiveTimer(5000)
+  observe({
+    if(isolate(count$i<60)){
+      autoInvalidate()
+    }
+    cat(isolate(count$i))
+    isolate(count$i <- count$i + 1)
+  })
 }
