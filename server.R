@@ -10,7 +10,7 @@ latestSimData <- read.csv(url("https://raw.githubusercontent.com/skyeliam/2024El
 colnames(latestSimData) <- str_replace_all(colnames(latestSimData),"\\."," ")
 timeStamp <- StrExtractBetween(read_file(url(
   "https://raw.githubusercontent.com/skyeliam/2024ElectionModel/refs/heads/main/timestamp.txt"))," ","\n")
-
+yaxis <- c(state.name,"District of Columbia","Maine CD 1","Maine CD 2","Nebraska CD 2")
 #function for generating histogram of all EV outcomes
 histGenerator <- function(){
   breaktest <- c(80,85,90,100,105,110,115,120,125,130,135,140,145,150,155,160,165,170,175,180,185,190,195,200,205,210,215,220,225,230,235,240,
@@ -155,8 +155,16 @@ server <- function(input, output, session) {
   
   #print a summary of the selected state's data
   output$summary <- renderText({
+    #find odds of winning selected state
     winProb <- sum(state()>0)/4000
+    
+    #find odds state is the tipping point state
     tpoint <- sum(latestSimData$TippingPointState == input$statePick,na.rm=TRUE)/4000
+    
+    #calculate odds of winning overall based on winning state
+    harrisConditionalWin <- sum(latestSimData[,input$statePick]>0 & latestSimData[,"ElectoralVotes"] > 269)/sum(latestSimData[,input$statePick]>0)
+    trumpConditionalWin <- sum(latestSimData[,input$statePick]<0 & latestSimData[,"ElectoralVotes"] < 269)/sum(latestSimData[,input$statePick]<0)
+    
     if(winProb < .5){
       outputString <- paste0("<br>Trump has a ",sprintf("%.1f%%",100-winProb*100)," chance of winning ",input$statePick,".")
     }else{
@@ -164,7 +172,17 @@ server <- function(input, output, session) {
     }
     outputString <- paste0(outputString, "<p>",ifelse(winProb < 0.5,"His","Her")," average margin in ",input$statePick, " is ", sprintf("%.2f%%",abs(mean(state()))),".</p>")
     outputString <- paste0(outputString,"<p>",input$statePick, " is the tipping point in ",
-                           sprintf("%.1f%%",tpoint*100)," of simulations.</p>")
+                           sprintf("%.1f%%",tpoint*100)," of simulations.")
+    if(!is.na(harrisConditionalWin)){
+    outputString <- paste0(outputString,"<br>If Harris wins ",input$statePick," she has a ",
+                           sprintf("%.1f%%",harrisConditionalWin*100)," chance of winning the election.")
+    }
+    if(!is.na(trumpConditionalWin)){
+    outputString <- paste0(outputString,"<br>If Trump wins ", input$statePick," he has a ",
+                           sprintf("%.1f%%",trumpConditionalWin*100),
+                           " chance of winning the election.")
+    }
+    outputString <- paste0(outputString,"</p>")
     outputString
   })
   
@@ -225,6 +243,20 @@ server <- function(input, output, session) {
     }
     HTML(compareStr)
   })
+  
+    output$info <- renderText({
+      if(is.null(input$forestClick$y)){
+        HTML("")
+      }else{
+        margin <- mean(latestSimData[,yaxis[ifelse((55-round(input$forestClick$y)<0),0,55-round(input$forestClick$y))]])
+        if(is.na(margin)){
+          HTML("")
+        }else{
+        HTML(paste0("The average predicted margin in ",yaxis[55-round(input$forestClick$y)], " is ",
+                    ifelse(margin < 0, "Trump +","Harris +"),abs(round(margin,2))))
+        }
+      }
+    })
   
   count <- reactiveValues(i = 0)
   autoInvalidate <- reactiveTimer(5000)
