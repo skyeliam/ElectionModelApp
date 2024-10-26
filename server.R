@@ -14,14 +14,16 @@ yaxis <- c(state.name,"District of Columbia","Maine CD 1","Maine CD 2","Nebraska
 #function for generating histogram of all EV outcomes
 histGenerator <- function(){
   breaktest <- c(80,85,90,100,105,110,115,120,125,130,135,140,145,150,155,160,165,170,175,180,185,190,195,200,205,210,215,220,225,230,235,240,
-                 245,250,255,260,265,268.5,269,269.5,275,280,285,290,295,300,305,310,315,320,325,330,335,340,345,350,355,
+                 245,250,255,260,265,268.4,269.5,275,280,285,290,295,300,305,310,315,320,325,330,335,340,345,350,355,
                  360,365,370,375,380,385,390,395,400,405,410,415,420,425,430,435,440,445,450,455,460,465,470)
   gram <- hist(latestSimData$ElectoralVotes,breaks = breaktest,freq=TRUE)
   colorbreaks <- rep("firebrick1",length(gram$breaks))
   colorbreaks[gram$breaks > 268] <- "grey"
   colorbreaks[gram$breaks > 269] <- "dodgerblue"
+  axis(1,at = c(120,195,270,345,420))
+  par(mar=c(2,2,1,1))
   hist(latestSimData$ElectoralVotes, col = colorbreaks, breaks = breaktest,freq=TRUE,
-       xlab = "Harris Electoral Votes",main = NULL,xlim=c(min(latestSimData$ElectoralVotes),max(latestSimData$ElectoralVotes)))
+       xaxs="i",xlab = NULL,main = NULL,xlim=c(min(latestSimData$ElectoralVotes),max(latestSimData$ElectoralVotes)))
 }
 
 #function for generating a dot plot of EV outcomes vs popular vote
@@ -197,7 +199,7 @@ server <- function(input, output, session) {
          and assigns a range of splits for undecided voters. <br> Unlike some other models, this one does not factor in economic
          fundamentals, nor does it weight based on percieved poll quality, although pollsters excluded by 538 (most
          notably Rasmussen), are not captured in the model. The model is also not forward looking, that is it does
-         not polling forward to forecast what changes might have happened by Election Day. Thus the model better approximates
+         not project polling forward to forecast what changes might have happened by Election Day. Thus the model better approximates
          a nowcast than a forecast, although the two should converge as Election Day approaches.<br>
          <br>I hope you enjoy perusing the model as much as I have enjoyed constructing it.<br><br>-Liam</i>")
   })
@@ -244,6 +246,30 @@ server <- function(input, output, session) {
     HTML(compareStr)
   })
   
+  #output from clicking on the histogram
+  output$histSelection <- renderText({
+    xval <- input$histClick$x
+    if(is.null(xval)){
+      xval <- 268.5
+    }
+    buckets <- histGenerator()$breaks
+    top <- buckets[min(which(xval < buckets))]
+    bottom <- buckets[max(which(xval > buckets))]
+    simCount <- sum(latestSimData$ElectoralVotes <= top & latestSimData$ElectoralVotes > bottom)
+    if(xval > 268 & xval < 270){
+      HTML(paste0(sprintf("%.2f%%",simCount/40)," of simulations result in a tie.<br><br>"))
+    }else{
+      if(round(top)<269){
+        HTML(paste0("Trump wins between ", 538-round(top), " and ", 538 - round(bottom), " electoral votes in ",
+                    sprintf("%.2f%%",simCount/40)," of simulations.<br><br>"))
+      }else{
+        HTML(paste0("Harris wins between ", round(bottom+1), " and ", round(top), " electoral votes in ",
+                    sprintf("%.2f%%",simCount/40)," of simulations.<br><br>"))
+      }
+    }
+  })
+  
+  #output from clicking on the forestplot
     output$info <- renderText({
       if(is.null(input$forestClick$y)){
         HTML("")
@@ -252,12 +278,13 @@ server <- function(input, output, session) {
         if(is.na(margin)){
           HTML("")
         }else{
-        HTML(paste0("The average predicted margin in ",yaxis[55-round(input$forestClick$y)], " is ",
+        HTML(paste0("The average predicted margin in ",yaxis[55-round(input$forestClick$y+.01)], " is ",
                     ifelse(margin < 0, "Trump +","Harris +"),abs(round(margin,2))))
         }
       }
     })
   
+  #code the prevents heroku from timing app out until after 5 mins
   count <- reactiveValues(i = 0)
   autoInvalidate <- reactiveTimer(5000)
   observe({
