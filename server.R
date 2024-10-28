@@ -260,10 +260,10 @@ server <- function(input, output, session) {
       HTML(paste0(sprintf("%.2f%%",simCount/40)," of simulations result in a tie.<br><br>"))
     }else{
       if(round(top)<269){
-        HTML(paste0("Trump wins between ", 538-round(top), " and ", 538 - round(bottom), " electoral votes in ",
+        HTML(paste0("Trump wins between ", 538-round(top-.50001), " and ", 538 - round(bottom), " electoral votes in ",
                     sprintf("%.2f%%",simCount/40)," of simulations.<br><br>"))
       }else{
-        HTML(paste0("Harris wins between ", round(bottom+1), " and ", round(top), " electoral votes in ",
+        HTML(paste0("Harris wins between ", round(bottom+.50001), " and ", round(top), " electoral votes in ",
                     sprintf("%.2f%%",simCount/40)," of simulations.<br><br>"))
       }
     }
