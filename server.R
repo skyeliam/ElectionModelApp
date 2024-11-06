@@ -190,7 +190,13 @@ server <- function(input, output, session) {
   
   #describe the model at top of the page
   output$description <- renderText({
-    HTML("<i>This dashboard provides figures for the 2024 Presidential Election. Combining polling data from 538's
+    HTML("<i>
+    A deeper analysis of the model's performance is to come, but overall, the model seems to have performed moderately well
+    in predicting the Electoral College (while it slightly favored Harris to win, the modal outcome was a Trump sweep of the swing states),
+    but whiffed pretty terribly on the popular vote. Trump is poised to carry the popular vote by roughly 1.5%, and fewer than 2.5% of simulations
+    predicted that outcome. While further analysis is needed, certainly one driver of this miss is the lack of discounting of TIPP's
+    daily polling of the NPV, which diluted a more diverse set of polls that pointed to a Trump popular vote win. <br><br>
+    This dashboard provides figures for the 2024 Presidential Election. Combining polling data from 538's
          database and state demographic data, the model runs 4,000 simulations on a daily or twice daily basis,
          and the results are then loaded into this dashboard in aggregate, providing a look at possible outcomes.
          <br><br> The model works by first taking an average of polls in each state since the start of the race, 
